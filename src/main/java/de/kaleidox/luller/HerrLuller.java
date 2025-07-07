@@ -1,16 +1,24 @@
 package de.kaleidox.luller;
 
+import de.kaleidox.luller.repo.PersonalityTraitRepository;
 import de.kaleidox.luller.security.SecurityConfig;
+import de.kaleidox.luller.trait.model.ResponseModel;
+import de.kaleidox.luller.trait.model.TraitTriggerData;
 import de.kaleidox.luller.util.ApplicationContextProvider;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.events.GenericEvent;
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
+import net.dv8tion.jda.api.hooks.EventListener;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import org.comroid.annotations.Description;
 import org.comroid.api.config.ConfigurationManager;
 import org.comroid.api.func.ext.Context;
 import org.comroid.api.func.util.Command;
+import org.comroid.api.func.util.Event;
 import org.comroid.api.io.FileFlag;
 import org.comroid.api.io.FileHandle;
 import org.jetbrains.annotations.Nullable;
@@ -21,6 +29,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.core.annotation.Order;
 
 import javax.sql.DataSource;
@@ -31,7 +40,9 @@ import static de.kaleidox.luller.util.ApplicationContextProvider.*;
 
 @Slf4j
 @SpringBootApplication
-@ComponentScan(basePackageClasses = { ApplicationContextProvider.class, SecurityConfig.class })
+@ComponentScan(basePackageClasses = {
+        ApplicationContextProvider.class, SecurityConfig.class, PersonalityTraitRepository.class
+})
 public class HerrLuller {
     public static final File COMMAND_PURGE_FILE = new File("./purge_commands");
 
@@ -50,6 +61,8 @@ public class HerrLuller {
         System.exit(0);
         return "Goodbye";
     }
+
+    @Lazy @Autowired PersonalityTraitRepository traits;
 
     @Bean
     public Locale locale() {
@@ -114,6 +127,47 @@ public class HerrLuller {
             return adp;
         } finally {
             cmdr.initialize();
+        }
+    }
+
+    @Bean
+    public Event.Bus<GenericEvent> eventBus(@Autowired JDA jda) {
+        var bus = new Event.Bus<GenericEvent>();
+
+        bus.register(this);
+        jda.addEventListener((EventListener) bus::accept);
+        bus.start();
+
+        return bus;
+    }
+
+    @Event.Subscriber
+    public void onMessageReceived(MessageReceivedEvent event) {
+        var data = TraitTriggerData.of(event);
+        handleTraitTrigger(data);
+    }
+
+    @Event.Subscriber
+    public void onMessageReceived(MessageReactionAddEvent event) {
+        var data = TraitTriggerData.of(event);
+        handleTraitTrigger(data);
+    }
+
+    private void handleTraitTrigger(TraitTriggerData data) {
+        for (var trait : traits.findAll()) {
+            if (trait.getTriggers().stream().noneMatch(trigger -> trigger.test(data))) continue;
+
+            var traitActions = trait.getActions();
+            var decidedActions = trait.getDeciders()
+                    .stream()
+                    .flatMap(decider -> decider.apply(traitActions.stream()))
+                    .toList();
+
+            var model = new ResponseModel();
+            for (var action : decidedActions)
+                model = action.apply(model, data);
+
+            if (model.isApplicable()) model.apply(data).queue();
         }
     }
 }

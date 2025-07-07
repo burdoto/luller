@@ -20,6 +20,10 @@ public class ResponseModel {
     @Nullable EmbedBuilder         embed;
     @Nullable List<@NotNull Emoji> reactions;
 
+    public boolean isApplicable() {
+        return content != null || embed != null || (reactions != null && !reactions.isEmpty());
+    }
+
     public MessageCreateData createResponseMessage() {
         var msg = new MessageCreateBuilder();
         if (content != null) msg.setContent(content);
