@@ -9,6 +9,7 @@ import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -22,13 +23,13 @@ public class DiscordRoleRequirementUserService extends DefaultOAuth2UserService 
         var user = super.loadUser(userRequest);
 
         var roleRequirements = config.getOAuth().getRoleRequirements();
-        var roles = roleRequirements.stream()
+        var roles = Arrays.stream(roleRequirements)
                 .map(BotConfig.DiscordOAuth2Info.GuildRoleRequirement::getRole)
                 .map(jda::getRoleById)
                 .flatMap(Stream::ofNullable)
                 .collect(Collectors.toUnmodifiableSet());
 
-        if (roleRequirements.stream()
+        if (Arrays.stream(roleRequirements)
                 .map(BotConfig.DiscordOAuth2Info.GuildRoleRequirement::getGuild)
                 .map(jda::getGuildById)
                 .flatMap(Stream::ofNullable)
