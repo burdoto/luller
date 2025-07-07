@@ -82,16 +82,16 @@ public class HerrLuller {
 
     @Bean
     public JDA jda(@Autowired BotConfig config) {
-        return JDABuilder.create(config.token, GatewayIntent.getIntents(GatewayIntent.ALL_INTENTS)).build();
+        return JDABuilder.create(config.getToken(), GatewayIntent.getIntents(GatewayIntent.ALL_INTENTS)).build();
     }
 
     @Bean
     public DataSource database(@Autowired BotConfig config) {
         return DataSourceBuilder.create()
                 .driverClassName(Driver.class.getCanonicalName())
-                .url(config.database.uri)
-                .username(config.database.username)
-                .password(config.database.password)
+                .url(config.getDatabase().getUri())
+                .username(config.getDatabase().getUsername())
+                .password(config.getDatabase().getPassword())
                 .build();
     }
 
