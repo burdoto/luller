@@ -7,10 +7,10 @@ import jakarta.persistence.Entity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-import java.util.function.BiFunction;
+import java.util.function.BiConsumer;
 
 @Data
 @Entity
 @EqualsAndHashCode(callSuper = true)
 public abstract class PersonalityTraitAction extends BasicEntity
-        implements BiFunction<ResponseModel, TraitTriggerData, ResponseModel> {}
+        implements BiConsumer<ResponseModel, TraitTriggerData> {}

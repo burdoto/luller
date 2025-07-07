@@ -14,7 +14,7 @@ public final class StaticPlaintextMessageAction extends PersonalityTraitAction {
     String text;
 
     @Override
-    public ResponseModel apply(ResponseModel model, TraitTriggerData trigger) {
-        return model.setContent(text);
+    public void accept(ResponseModel model, TraitTriggerData trigger) {
+        model.setContent(text);
     }
 }

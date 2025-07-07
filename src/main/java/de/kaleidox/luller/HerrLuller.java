@@ -163,9 +163,9 @@ public class HerrLuller {
                     .flatMap(decider -> decider.apply(traitActions.stream()))
                     .toList();
 
-            var model = new ResponseModel();
+            final var model = new ResponseModel();
             for (var action : decidedActions)
-                model = action.apply(model, data);
+                action.accept(model, data);
 
             if (model.isApplicable()) model.apply(data).queue();
         }
