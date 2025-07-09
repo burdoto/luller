@@ -1,0 +1,37 @@
+{{/* determine match, vowel and consonant */}}
+{{ $poop := reFind "[bflmnprsyaeiou]{2}\\W{0,5}$" .Message.Content }}
+{{ $vowel := reFind "[aeiou]" (reFind "[aeiou]\\w?\\W{0,5}$" $poop) }}
+{{ $consonant := reFind "[bflmnprsy]" (reFind "[bflmnprsy]\\w?\\W{0,5}$" $poop) }}
+
+{{/* only retain last X words */}}
+{{ $words := split .Message.Content " " }}
+{{ $i := sub (len $words) 4 }}
+{{ if lt $i 0 }}
+  {{ $i = 0 }}
+{{ end }}
+{{ $sentence := "" }}
+{{ while lt $i (len $words) }}
+  {{ $sentence = joinStr " " $sentence (index $words $i) }}
+  {{ $i = add $i 1 }}
+{{ end }}
+
+{{/* add poop parts back to sentence */}}
+{{ $sentence := split $sentence $poop }}
+{{ $buf := index $sentence 0 }}
+{{ $lim := sub (len $sentence) 1 }}
+{{ $delim := reFind "[bflmnprsyaeiou]{2}" $poop }}
+{{ $i := 1 }}
+{{ while lt $i $lim }}
+  {{ $buf = joinStr $poop $buf (index $sentence $i) }}
+  {{ $i = add $i 1 }}
+{{ end }}
+
+{{/* assemble poop */}}
+{{ $poop := upper (joinStr "" $consonant $vowel $vowel $consonant) }}
+{{ $poop := joinStr "" $buf $poop }}
+
+{{/* at random, respond with poop */}}
+{{ $rng := randInt 0 100 }}
+{{ if lt $rng 10 }}
+  {{ $poop }}
+{{ end }}

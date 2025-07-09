@@ -1,0 +1,3 @@
+{{ if or (eq .Reaction.Emoji.ID 600810928929374218) (eq .Reaction.Emoji.ID 600810966451748904) (eq .Reaction.Emoji.ID 600810927918678017) }} 
+    {{ addReactions ":ja:600810928929374218" ":nein:600810966451748904" ":egal:600810927918678017" }}
+{{ end }}
